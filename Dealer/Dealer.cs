@@ -1,6 +1,7 @@
 ﻿using GoFishCore;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using ToolsCore;
 
@@ -9,18 +10,27 @@ namespace GoFishActors
     public class Dealer : IDealer, IActor
     {
         // The dealer has all the cards. Shuffles. Deals. Gives the top card when they "Go Fish". Gives cards for them to "Draw up to 5"
-        // The dealer knows how many cards are left. Notifies the table when there are no more.
+        // The dealer knows how many cards are left.
         // The dealer is not a player.
+        // The dealer knows who all the players are.
         // The dealer knows whose turn it is. The dealer knows the rules. The dealer prompts the players.
 
         private List<ICard> cardsInDeck = new List<ICard>(); // It's the "deck" during the deal, but then it becomes the "draw pile" same thing.
-        private ITable _table;
         private IAnnouncements _announcements;
 
-        public Dealer(ITable table, IAnnouncements announcements)
+        private readonly List<IPlayer> _players;
+        public ReadOnlyCollection<IPlayer> Players { get; private set; }
+
+        public Dealer(IAnnouncements announcements)
         {
-            _table = table;
             _announcements = announcements;
+            _players = new List<IPlayer>();
+            Players = _players.AsReadOnly();
+        }
+
+        public void RegisterPlayer(IPlayer player)
+        {
+            _players.Add(player);
         }
 
         public void Handle(IMessage message)
@@ -79,11 +89,11 @@ namespace GoFishActors
             BuildNewDeck();
             cardsInDeck.Shuffle();
             // Tell each player to Reset their Hand
-            foreach(var player in _table.Players)
+            foreach(var player in Players)
             {
                 player.Handle(new DealerAskPlayerToResetHand());
             }
-            foreach(var player in _table.Players)
+            foreach(var player in Players)
             {
                 DealCardsToPlayer(5, player);
             }
@@ -114,9 +124,9 @@ namespace GoFishActors
 
         private void TellNextPlayerToTakeTurn()
         {
-            var player = _table.Players[WhosTurnIsItIndex];
+            var player = Players[WhosTurnIsItIndex];
             WhosTurnIsItIndex++;
-            if (WhosTurnIsItIndex == _table.Players.Count())
+            if (WhosTurnIsItIndex == Players.Count())
             {
                 WhosTurnIsItIndex = 0;
             }
@@ -128,14 +138,14 @@ namespace GoFishActors
         {
             // Game is over when the Draw Pile is empty and every player's hand is empty.
             // When "Shark" is added to the game, then there will be one player with a card left.
-            int cardsInPlay = cardsInDeck.Count + _table.Players.Sum(x => x.NumberCardsInHand);            
+            int cardsInPlay = cardsInDeck.Count + Players.Sum(x => x.NumberCardsInHand);            
             return cardsInPlay < 2;
         }
 
         private void WhoWon()
         {
             _announcements.Add("The game is over.");
-            foreach(var player in _table.Players)
+            foreach(var player in Players)
             {
                 _announcements.Add($"{player.Name} has laid down {player.PairsOnTable.Count()} pairs.");
                 foreach(var pair in player.PairsOnTable)

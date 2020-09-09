@@ -9,7 +9,6 @@ namespace GoFishActors
 {
     public class Player : IPlayer, IActor
     {
-        private readonly ITable _table;
         private readonly IDealer _dealer;
         private readonly IAnnouncements _announcements;
         private bool drawPileIsEmpty;
@@ -31,9 +30,8 @@ namespace GoFishActors
 
         public string Name { get; set; }
 
-        public Player(IDealer dealer, ITable table, IAnnouncements announcements)
+        public Player(IDealer dealer, IAnnouncements announcements)
         {
-            _table = table;
             _dealer = dealer;
             _announcements = announcements;
             _pairsOnTable = new List<(ICard, ICard)>();
@@ -129,7 +127,7 @@ namespace GoFishActors
             var pickACardAnyCard = cardsInHand.First();
             var fish = pickACardAnyCard.Fish;
             List<IPlayer> playersThatAreNotMe = new List<IPlayer>();
-            playersThatAreNotMe.AddRange(_table.Players);
+            playersThatAreNotMe.AddRange(_dealer.Players);
             playersThatAreNotMe.Remove(this);
             List<IPlayer> playersWithNoCards = new List<IPlayer>();
             foreach(var player in playersThatAreNotMe)

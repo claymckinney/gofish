@@ -16,7 +16,6 @@ namespace GoFishConsoleApp
 
             IServiceProvider serviceProvider = collection.BuildServiceProvider();
 
-            var table = serviceProvider.GetService<ITable>();
             var dealer = serviceProvider.GetService<IDealer>();
             var player1 = serviceProvider.GetService<IPlayer>();
             player1.Name = "Cody";
@@ -28,11 +27,11 @@ namespace GoFishConsoleApp
             player4.Name = "Robert";
             var player5 = serviceProvider.GetService<IPlayer>();
             player5.Name = "Clay";
-            table.RegisterPlayer(player1);
-            table.RegisterPlayer(player2);
-            table.RegisterPlayer(player3);
-            table.RegisterPlayer(player4);
-            table.RegisterPlayer(player5);
+            dealer.RegisterPlayer(player1);
+            dealer.RegisterPlayer(player2);
+            dealer.RegisterPlayer(player3);
+            dealer.RegisterPlayer(player4);
+            dealer.RegisterPlayer(player5);
             dealer.StartGame();
             // How will console know when game is over?
             // View a log of all the moves in the game
@@ -50,7 +49,6 @@ namespace GoFishConsoleApp
         {
             services.AddLogging(configure => configure.AddConsole())
                 .AddScoped<IAnnouncements, Announcements>();
-            services.AddScoped<ITable, Table>();
             services.AddScoped<IDealer, Dealer>();
             services.AddTransient<IPlayer, Player>();
         }
