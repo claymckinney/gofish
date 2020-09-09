@@ -13,9 +13,9 @@ namespace GoFishActors
         // The dealer knows how many cards are left.
         // The dealer is not a player.
         // The dealer knows who all the players are.
-        // The dealer knows whose turn it is. The dealer knows the rules. The dealer prompts the players.
+        // The dealer knows whose turn it is.
 
-        private List<ICard> cardsInDeck = new List<ICard>(); // It's the "deck" during the deal, but then it becomes the "draw pile" same thing.
+        private List<ICard> cardsInDeck = new List<ICard>(); // It's the "deck" during the deal, but then it becomes the "draw pile". Same thing.
         private IAnnouncements _announcements;
 
         private readonly List<IPlayer> _players;
@@ -33,7 +33,7 @@ namespace GoFishActors
             _players.Add(player);
         }
 
-        public void Handle(IMessage message)
+        public void Handle(IMessage message) // Must handle all "...ToDealer..." Messages
         {
             switch (message)
             {

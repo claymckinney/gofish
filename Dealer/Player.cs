@@ -16,15 +16,7 @@ namespace GoFishActors
         private readonly List<(ICard, ICard)> _pairsOnTable;
         public ReadOnlyCollection<(ICard, ICard)> PairsOnTable { get; private set; }
 
-        private List<ICard> cardsInHand; // I'd like to take the actual card, add it to this
-        // list, then take it out of the list to make pairs on the table or give it to another player. I don't
-        // want it to be a copy of the card, and quietly destroy the old one. But, that isn't possible if the
-        // card is serialized, passed around via http, and is deserialized. Nope, being silly. The client browser
-        // will only have a static view of the thing, but the actual card could still exist in the Player's
-        // memory. In the Player instance's cardsInHand field...
-        // Still, it's shared state. If I don't carefully remove my own reference to the card object from my hand
-        // that I'm sending to the other player, we could both have a reference to the same card in our hand.
-        // For a future improvement, I need a sentient deck to be the source of truth for who has which card.
+        private List<ICard> cardsInHand;
 
         public int NumberCardsInHand => cardsInHand.Count;
 
@@ -39,7 +31,7 @@ namespace GoFishActors
             cardsInHand = new List<ICard>();
         }
 
-        public void Handle(IMessage message) // Messages I'm recieving. I'm the "ToPlayer" in all of these.
+        public void Handle(IMessage message) // Must handle all the "...ToPlayer..." messages, from other players and from the dealer
         {
             switch (message)
             {
