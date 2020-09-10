@@ -1,4 +1,5 @@
 ﻿using GoFishCore;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -16,14 +17,14 @@ namespace GoFishActors
         // The dealer knows whose turn it is.
 
         private List<ICard> cardsInDeck = new List<ICard>(); // It's the "deck" during the deal, but then it becomes the "draw pile". Same thing.
-        private IAnnouncements _announcements;
+        private readonly ILogger _logger;
 
         private readonly List<IPlayer> _players;
         public ReadOnlyCollection<IPlayer> Players { get; private set; }
 
-        public Dealer(IAnnouncements announcements)
+        public Dealer(ILogger<Dealer> logger)
         {
-            _announcements = announcements;
+            _logger = logger;
             _players = new List<IPlayer>();
             Players = _players.AsReadOnly();
         }
@@ -40,19 +41,18 @@ namespace GoFishActors
                 case PlayerToDealerDrawCard cardRequest when cardsInDeck.Any():
                     var card = cardsInDeck.FirstOrDefault();
                     cardsInDeck.Remove(card);
-                    _announcements.Add($"Dealer gives a card to {cardRequest.Sender.Name}. There are now {cardsInDeck.Count()} cards left in the draw pile.");
+                    _logger.LogInformation($"Dealer gives a card to {cardRequest.Sender.Name}. There are now {cardsInDeck.Count()} cards left in the draw pile.");
                     cardRequest.Sender.Handle(new DealerToPlayerGiveCard(card));
                     break;
                 case PlayerToDealerDrawCard cardRequest:
-                    _announcements.Add($"There are no cards left in the draw pile.");
-                    _announcements.ReadAll();
+                    _logger.LogInformation($"There are no cards left in the draw pile.");
                     cardRequest.Sender.Handle(new DealerToPlayerNoCardsLeft());
                     break;
                 case PlayerToDealerAskForCards cardsRequest when cardsInDeck.Any():
                     GiveCardsToPlayer(cardsRequest.Number, cardsRequest.Sender);
                     break;
                 case PlayerToDealerAskForCards cardsRequest:
-                    _announcements.Add($"There are no cards left in the draw pile.");
+                    _logger.LogInformation($"There are no cards left in the draw pile.");
                     cardsRequest.Sender.Handle(new DealerToPlayerNoCardsLeft());
                     break;
                 case PlayerToDealerTurnOver turnOver:
@@ -66,8 +66,7 @@ namespace GoFishActors
                     }
                     break;
                 default:
-                    _announcements.Add($"Dealer recieved an unhandled message. {message}");
-                    _announcements.ReadAll();
+                    _logger.LogInformation($"Dealer recieved an unhandled message. {message}");
                     break;
             }
         }
@@ -104,7 +103,7 @@ namespace GoFishActors
         {
             var cards = cardsInDeck.GetRange(0, numberOfCards);
             cardsInDeck.RemoveRange(0, numberOfCards);
-            _announcements.Add($"Dealer has removed 5 cards from the deck and is dealing them to {player.Name}");
+            _logger.LogInformation($"Dealer has removed 5 cards from the deck and is dealing them to {player.Name}");
             player.Handle(new DealerToPlayerDealCards(cards));
         }
 
@@ -116,7 +115,7 @@ namespace GoFishActors
             }
             var cards = cardsInDeck.GetRange(0, numberOfCards);
             cardsInDeck.RemoveRange(0, numberOfCards);
-            _announcements.Add($"Dealer has removed {numberOfCards} cards from the draw pile and is giving them to {player.Name}. Draw pile now has {cardsInDeck.Count()} cards.");
+            _logger.LogInformation($"Dealer has removed {numberOfCards} cards from the draw pile and is giving them to {player.Name}. Draw pile now has {cardsInDeck.Count()} cards.");
             player.Handle(new DealerToPlayerGiveCards(cards));
         }
 
@@ -130,7 +129,7 @@ namespace GoFishActors
             {
                 WhosTurnIsItIndex = 0;
             }
-            _announcements.Add($"Dealer is telling {player.Name} that it is their turn.");
+            _logger.LogInformation($"Dealer is telling {player.Name} that it is their turn.");
             player.Handle(new DealerToPlayerItsYourTurn());
         }
 
@@ -144,17 +143,15 @@ namespace GoFishActors
 
         private void WhoWon()
         {
-            _announcements.Add("The game is over.");
+            _logger.LogInformation("The game is over.");
             foreach(var player in Players)
             {
-                _announcements.Add($"{player.Name} has laid down {player.PairsOnTable.Count()} pairs.");
+                _logger.LogInformation($"{player.Name} has laid down {player.PairsOnTable.Count()} pairs.");
                 foreach(var pair in player.PairsOnTable)
                 {
-                    _announcements.Add($"{pair.Item1.Fish}, {pair.Item2.Fish}");
+                    _logger.LogInformation($"{pair.Item1.Fish}, {pair.Item2.Fish}");
                 }
             }
-
-            _announcements.ReadAll();
         }
     }
 }

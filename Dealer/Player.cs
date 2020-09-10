@@ -1,4 +1,5 @@
 ﻿using GoFishCore;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -10,7 +11,7 @@ namespace GoFishActors
     public class Player : IPlayer, IActor
     {
         private readonly IDealer _dealer;
-        private readonly IAnnouncements _announcements;
+        private readonly ILogger _logger;
         private bool drawPileIsEmpty;
 
         private readonly List<(ICard, ICard)> _pairsOnTable;
@@ -22,10 +23,10 @@ namespace GoFishActors
 
         public string Name { get; set; }
 
-        public Player(IDealer dealer, IAnnouncements announcements)
+        public Player(IDealer dealer, ILogger<Player> logger)
         {
             _dealer = dealer;
-            _announcements = announcements;
+            _logger = logger;
             _pairsOnTable = new List<(ICard, ICard)>();
             PairsOnTable = _pairsOnTable.AsReadOnly();
             cardsInHand = new List<ICard>();
@@ -40,13 +41,13 @@ namespace GoFishActors
                     break;
                 case DealerToPlayerDealCards dealtCards:
                     cardsInHand.AddRange(dealtCards.Cards);
-                    _announcements.Add($"Dealer gave {Name} {dealtCards.Cards.Count()}. {Name} now has {cardsInHand.Count()} cards.");
+                    _logger.LogInformation($"Dealer gave {Name} {dealtCards.Cards.Count()}. {Name} now has {cardsInHand.Count()} cards.");
                     break;
                 case PlayerToPlayerGimmeFish fishRequest when cardsInHand.Where(x => x.Fish == fishRequest.Fish).Any():
                     FishRequestAffirmative(fishRequest);
                     break;
                 case PlayerToPlayerGimmeFish fishRequest:
-                    _announcements.Add($"{Name} is telling {fishRequest.Sender.Name} to \"Go Fish\".");
+                    _logger.LogInformation($"{Name} is telling {fishRequest.Sender.Name} to \"Go Fish\".");
                     fishRequest.Sender.Handle(new PlayerToPlayerGoFish(sender: this));
                     break;
                 case DealerToPlayerItsYourTurn myTurn:
@@ -67,25 +68,24 @@ namespace GoFishActors
                     TurnIsOver();
                     break;
                 case PlayerToPlayerGoFish goFish:
-                    _announcements.Add($"{Name} is asking the dealer for a card.");
+                    _logger.LogInformation($"{Name} is asking the dealer for a card.");
                     _dealer.Handle(new PlayerToDealerDrawCard(sender:this));
                     break;
                 case DealerToPlayerGiveCard gotCard:
                     HandleCard(gotCard.Card);
                     break;
                 case DealerToPlayerNoCardsLeft noCard: // Response to either fishing in the draw pile or drawing up to 5
-                    _announcements.Add($"Dealer gave {Name} no cards because the draw pile is empty.");
+                    _logger.LogInformation($"Dealer gave {Name} no cards because the draw pile is empty.");
                     drawPileIsEmpty = true;
                     TurnIsOver();
                     break;
                 case DealerToPlayerGiveCards gotCards: // Response to drawing up to 5
                     cardsInHand.AddRange(gotCards.Cards);
-                    _announcements.Add($"Dealer gave {Name} {gotCards.Cards.Count()} cards.");
+                    _logger.LogInformation($"Dealer gave {Name} {gotCards.Cards.Count()} cards.");
                     TurnIsOver();
                     break;
                 default:
-                    _announcements.Add($"{Name} recieved a message that is unhandled. {message}");
-                    _announcements.ReadAll();
+                    _logger.LogInformation($"{Name} recieved a message that is unhandled. {message}");
                     break;
             }
         }
@@ -94,14 +94,14 @@ namespace GoFishActors
         {
             cardsInHand.Clear();
             _pairsOnTable.Clear();
-            _announcements.Add($"{Name} has {cardsInHand.Count()} cards and {PairsOnTable.Count} pairs laid down on the table.");
+            _logger.LogInformation($"{Name} has {cardsInHand.Count()} cards and {PairsOnTable.Count} pairs laid down on the table.");
         }
 
         private void FishRequestAffirmative(PlayerToPlayerGimmeFish fishRequest)
         {
             var cardToGive = cardsInHand.Where(x => x.Fish == fishRequest.Fish).FirstOrDefault();
             cardsInHand.Remove(cardToGive);
-            _announcements.Add($"{Name} is giving {cardToGive.Fish} to {fishRequest.Sender.Name} and now has {cardsInHand.Count()} cards.");
+            _logger.LogInformation($"{Name} is giving {cardToGive.Fish} to {fishRequest.Sender.Name} and now has {cardsInHand.Count()} cards.");
             fishRequest.Sender.Handle(
                     new PlayerToPlayerGiveCard(
                         sender: this,
@@ -111,10 +111,13 @@ namespace GoFishActors
 
         private void AskForFish()
         {
-            // Check if any known Fish (from the Table conversation) are in my hand.
-            //      ex: Peter asked for a crab, go fish, drew, didn't lay down. So Peter has a crab. Table knows this.
-            // Choose a Fish to request
+            // TODO: Check if any known Fish (from the conversation) are in my hand.
+            //      ex: Peter asked for a crab, go fish, drew, didn't lay down. So Peter has a crab.
+            //      For the players or the dealer to keep up with the context clues like this, all
+            //      messages would need to be "read" by everyone, without giving away game secrets.
+            //      This would be a major refactor.
 
+            // For now, pick a random card to request and pick a random player to request it from.
             cardsInHand.Shuffle();
             var pickACardAnyCard = cardsInHand.First();
             var fish = pickACardAnyCard.Fish;
@@ -131,12 +134,12 @@ namespace GoFishActors
             {
                 result.Shuffle();
                 var victim = result.First();
-                _announcements.Add($"{Name} is asking {victim.Name} for a {fish}.");
+                _logger.LogInformation($"{Name} is asking {victim.Name} for a {fish}.");
                 victim.Handle(new PlayerToPlayerGimmeFish(sender: this, fish));
             }
             else
             {
-                _announcements.Add($"{Name} wanted to ask for a fish, but none of the other players have any cards.");
+                _logger.LogInformation($"{Name} wanted to ask for a fish, but none of the other players have any cards.");
                 TurnIsOver();
             }
         }
@@ -148,7 +151,7 @@ namespace GoFishActors
                 var matches = cardsInHand.Where(x => x.Fish == fish).ToArray<ICard>();
                 if(matches.Count() > 1)
                 {
-                    _announcements.Add($"{Name} is laying down a pair of {fish}.");
+                    _logger.LogInformation($"{Name} is laying down a pair of {fish}.");
                     _pairsOnTable.Add((matches[0], matches[1]));
                     cardsInHand.Remove(matches[0]);
                     cardsInHand.Remove(matches[1]);
@@ -161,7 +164,7 @@ namespace GoFishActors
             int numberNeeded = 5 - cardsInHand.Count;
             if(numberNeeded > 0 && !drawPileIsEmpty)
             {
-                _announcements.Add($"{Name} is asking the Dealer for {numberNeeded} cards to draw up to 5.");
+                _logger.LogInformation($"{Name} is asking the Dealer for {numberNeeded} cards to draw up to 5.");
                 _dealer.Handle(new PlayerToDealerAskForCards(sender: this, numberNeeded));
             }
             else
@@ -179,7 +182,7 @@ namespace GoFishActors
 
         private void TurnIsOver()
         {
-            _announcements.Add($"{Name}'s turn is over. {Name} has {cardsInHand.Count()} cards.");
+            _logger.LogInformation($"{Name}'s turn is over. {Name} has {cardsInHand.Count()} cards.");
             _dealer.Handle(new PlayerToDealerTurnOver(sender: this));
         }
     }

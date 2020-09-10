@@ -33,9 +33,8 @@ namespace GoFishConsoleApp
             dealer.RegisterPlayer(player4);
             dealer.RegisterPlayer(player5);
             dealer.StartGame();
-            // How will console know when game is over?
-            // View a log of all the moves in the game
 
+            // TODO:
             // Without viewing the log, play 100 games and see how many times each player won. Should be evenly distributed.
             // Between games, reset each players cards in hand and pairs laid down to empty. DealerToPlayerStartNewGame message.
 
@@ -48,9 +47,9 @@ namespace GoFishConsoleApp
         private static void ConfigureServices(IServiceCollection services)
         {
             services.AddLogging(configure => configure.AddConsole())
-                .AddScoped<IAnnouncements, Announcements>();
-            services.AddScoped<IDealer, Dealer>();
-            services.AddTransient<IPlayer, Player>();
+                .AddScoped<IDealer, Dealer>();
+            services.AddLogging(configure => configure.AddConsole())
+                .AddTransient<IPlayer, Player>();
         }
     }
 }
