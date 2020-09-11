@@ -3,7 +3,6 @@ using GoFishCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
-using ToolsCore;
 
 namespace GoFishConsoleApp
 {

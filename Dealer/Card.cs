@@ -2,7 +2,7 @@
 
 namespace GoFishActors
 {
-    public class Card : ICard
+    public struct Card : ICard
     {   // I'd like to take the actual card, pass it around, make pairs on the table or give it to another player. But, that
         // isn't how it works. I create the card once and then pass around references, but many references to the
         // same card can exist. So I have to be careful. I have to destroy references as they go out of date.
