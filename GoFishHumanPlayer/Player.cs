@@ -111,15 +111,17 @@ namespace GoFishHumanPlayer
 
         private void AskForFish()
         {
-            // TODO: Check if any known Fish (from the conversation) are in my hand.
-            //      ex: Peter asked for a crab, go fish, drew, didn't lay down. So Peter has a crab.
-            //      For the players or the dealer to keep up with the context clues like this, all
-            //      messages would need to be "read" by everyone, without giving away game secrets.
-            //      This would be a major refactor.
-
-            // For now, pick a random card to request and pick a random player to request it from.
-            cardsInHand.Shuffle();
-            var pickACardAnyCard = cardsInHand.First();
+            Console.WriteLine("Choose a card:");
+            for (int i = 0; i < cardsInHand.Count; i++)
+            {
+                Console.WriteLine($"Press {i} for {cardsInHand[i].DisplayName}");
+            }
+            var cardNumberString = Console.ReadLine();
+            if (!int.TryParse(cardNumberString, out int cardNumber))
+            {
+                Console.WriteLine("You didn't pick a number correctly. Sorry.");
+            }
+            var pickACardAnyCard = cardsInHand[cardNumber];
             var fish = pickACardAnyCard.Fish;
             List<IPlayer> playersThatAreNotMe = new List<IPlayer>();
             playersThatAreNotMe.AddRange(_dealer.Players);
@@ -132,8 +134,16 @@ namespace GoFishHumanPlayer
             IList<IPlayer> result = playersThatAreNotMe.Except(playersWithNoCards).ToList();
             if (result.Count > 0)
             {
-                result.Shuffle();
-                var victim = result.First();
+                for (int i = 0; i < result.Count; i++)
+                {
+                    Console.WriteLine($"Press {i} for {result[i].Name}, who has {result[i].NumberCardsInHand} cards.");
+                }
+                var playerNumberString = Console.ReadLine();
+                if (!int.TryParse(playerNumberString, out int playerNumber))
+                {
+                    Console.WriteLine("You didn't pick a number correctly. Sorry.");
+                }
+                var victim = result[playerNumber];
                 _logger.LogInformation($"{Name} is asking {victim.Name} for a {fish}.");
                 victim.Handle(new PlayerToPlayerGimmeFish(sender: this, fish));
             }

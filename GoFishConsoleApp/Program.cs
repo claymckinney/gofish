@@ -46,9 +46,13 @@ namespace GoFishConsoleApp
                 switch (key)
                 {
                     case PlayerType.Computer:
-                        return playerProvider.GetService<GoFishActors.Player>();
+                        return new GoFishActors.Player(
+                            playerProvider.GetRequiredService<IDealer>(),
+                            playerProvider.GetRequiredService<ILogger<GoFishActors.Player>>());
                     case PlayerType.Human:
-                        return playerProvider.GetService<GoFishHumanPlayer.Player>();
+                        return new GoFishHumanPlayer.Player(
+                            playerProvider.GetRequiredService<IDealer>(),
+                            playerProvider.GetRequiredService<ILogger<GoFishHumanPlayer.Player>>());
                     default:
                         return null;
                 }
