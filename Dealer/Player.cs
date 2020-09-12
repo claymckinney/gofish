@@ -8,7 +8,7 @@ using ToolsCore;
 
 namespace GoFishActors
 {
-    public class Player : IPlayer<Player>, IActor
+    public class Player : IPlayer, IActor
     {
         private readonly IDealer _dealer;
         private readonly ILogger _logger;

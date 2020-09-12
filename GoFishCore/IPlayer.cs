@@ -2,7 +2,7 @@
 
 namespace GoFishCore
 {
-    public interface IPlayer<T> where T : class, IPlayer<T>, IActor
+    public interface IPlayer : IActor
     {
         ReadOnlyCollection<(ICard, ICard)> PairsOnTable { get; }
         int NumberCardsInHand { get; }
