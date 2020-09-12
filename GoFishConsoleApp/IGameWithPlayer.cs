@@ -1,0 +1,6 @@
+﻿namespace GoFishConsoleApp
+{
+    interface IGameWithPlayer
+    {
+    }
+}

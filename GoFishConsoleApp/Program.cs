@@ -1,8 +1,8 @@
-﻿using GoFishActors;
-using GoFishCore;
+﻿using GoFishCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Linq;
 
 namespace GoFishConsoleApp
 {
@@ -10,28 +10,21 @@ namespace GoFishConsoleApp
     {
         static void Main(string[] args)
         {
+            if (!args.Any()) return;
+
             var collection = new ServiceCollection();
-            ConfigureServices(collection);
+            ConfigureServices(collection, args[0]);
 
             IServiceProvider serviceProvider = collection.BuildServiceProvider();
 
-            var dealer = serviceProvider.GetService<IDealer>();
-            var player1 = serviceProvider.GetService<IPlayer>();
-            player1.Name = "Cody";
-            var player2 = serviceProvider.GetService<IPlayer>();
-            player2.Name = "Deb";
-            var player3 = serviceProvider.GetService<IPlayer>();
-            player3.Name = "Joel";
-            var player4 = serviceProvider.GetService<IPlayer>();
-            player4.Name = "Robert";
-            var player5 = serviceProvider.GetService<IPlayer>();
-            player5.Name = "Clay";
-            dealer.RegisterPlayer(player1);
-            dealer.RegisterPlayer(player2);
-            dealer.RegisterPlayer(player3);
-            dealer.RegisterPlayer(player4);
-            dealer.RegisterPlayer(player5);
-            dealer.StartGame();
+            if (args[0] == "test")
+            {
+                serviceProvider.GetService<IIntegrationTest>();
+            }
+            else
+            {
+                serviceProvider.GetService<IGameWithPlayer>();
+            }
 
             // TODO:
             // Without viewing the log, play 100 games and see how many times each player won. Should be evenly distributed.
@@ -43,12 +36,32 @@ namespace GoFishConsoleApp
             }
         }
 
-        private static void ConfigureServices(IServiceCollection services)
+        private static void ConfigureServices(IServiceCollection services, string PlayerName)
         {
             services.AddLogging(configure => configure.AddConsole())
-                .AddScoped<IDealer, Dealer>();
+                .AddScoped<IDealer, GoFishActors.Dealer>();
             services.AddLogging(configure => configure.AddConsole())
-                .AddTransient<IPlayer, Player>();
+                .AddScoped<Func<PlayerType, IPlayer>>(playerProvider => key =>
+            {
+                switch (key)
+                {
+                    case PlayerType.Computer:
+                        return new GoFishActors.Player(
+                            playerProvider.GetRequiredService<IDealer>(),
+                            playerProvider.GetRequiredService<ILogger<GoFishActors.Player>>());
+                    case PlayerType.Human:
+                        return new GoFishHumanPlayer.Player(
+                            playerProvider.GetRequiredService<IDealer>(),
+                            playerProvider.GetRequiredService<ILogger<GoFishHumanPlayer.Player>>());
+                    default:
+                        return null;
+                }
+            });
+            services.AddTransient<IIntegrationTest, IntegrationTest>();
+            services.AddTransient<IGameWithPlayer>(x =>
+                new GameWithPlayer(x.GetRequiredService<Func<PlayerType, IPlayer>>(),
+                                    x.GetRequiredService<IDealer>(),
+                                    PlayerName));
         }
     }
 }
