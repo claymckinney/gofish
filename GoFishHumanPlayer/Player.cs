@@ -6,7 +6,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using ToolsCore;
 
-namespace GoFishActors
+namespace GoFishHumanPlayer
 {
     public class Player : IPlayer<Player>, IActor
     {
@@ -69,7 +69,7 @@ namespace GoFishActors
                     break;
                 case PlayerToPlayerGoFish goFish:
                     _logger.LogInformation($"{Name} is asking the dealer for a card.");
-                    _dealer.Handle(new PlayerToDealerDrawCard(sender:this));
+                    _dealer.Handle(new PlayerToDealerDrawCard(sender: this));
                     break;
                 case DealerToPlayerGiveCard gotCard:
                     HandleCard(gotCard.Card);
@@ -125,7 +125,7 @@ namespace GoFishActors
             playersThatAreNotMe.AddRange(_dealer.Players);
             playersThatAreNotMe.Remove(this);
             List<IPlayer> playersWithNoCards = new List<IPlayer>();
-            foreach(var player in playersThatAreNotMe)
+            foreach (var player in playersThatAreNotMe)
             {
                 if (player.NumberCardsInHand == 0) playersWithNoCards.Add(player);
             }
@@ -149,7 +149,7 @@ namespace GoFishActors
             foreach (Fish fish in (Fish[])Enum.GetValues(typeof(Fish)))
             {
                 var matches = cardsInHand.Where(x => x.Fish == fish).ToArray<ICard>();
-                if(matches.Count() > 1)
+                if (matches.Count() > 1)
                 {
                     _logger.LogInformation($"{Name} is laying down a pair of {fish}.");
                     _pairsOnTable.Add((matches[0], matches[1]));
@@ -162,7 +162,7 @@ namespace GoFishActors
         private void DrawUpToFive()
         {
             int numberNeeded = 5 - cardsInHand.Count;
-            if(numberNeeded > 0 && !drawPileIsEmpty)
+            if (numberNeeded > 0 && !drawPileIsEmpty)
             {
                 _logger.LogInformation($"{Name} is asking the Dealer for {numberNeeded} cards to draw up to 5.");
                 _dealer.Handle(new PlayerToDealerAskForCards(sender: this, numberNeeded));

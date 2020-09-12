@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "GoFishConsoleApp": {
+      "commandName": "Project",
+      "commandLineArgs": "test"
+    }
+  }
+}
