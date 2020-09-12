@@ -111,17 +111,19 @@ namespace GoFishHumanPlayer
 
         private void AskForFish()
         {
-            Console.WriteLine("Choose a card:");
+            _logger.LogInformation("Choose a card:");
             for (int i = 0; i < cardsInHand.Count; i++)
             {
-                Console.WriteLine($"Press {i} for {cardsInHand[i].DisplayName}");
+                _logger.LogInformation($"Press {i} for {cardsInHand[i].DisplayName}");
             }
             var cardNumberString = Console.ReadLine();
             if (!int.TryParse(cardNumberString, out int cardNumber))
             {
-                Console.WriteLine("You didn't pick a number correctly. Sorry.");
+                _logger.LogInformation("You didn't pick a number correctly. Sorry.");
             }
             var pickACardAnyCard = cardsInHand[cardNumber];
+
+            _logger.LogInformation("Choose a victim:");
             var fish = pickACardAnyCard.Fish;
             List<IPlayer> playersThatAreNotMe = new List<IPlayer>();
             playersThatAreNotMe.AddRange(_dealer.Players);
@@ -136,12 +138,12 @@ namespace GoFishHumanPlayer
             {
                 for (int i = 0; i < result.Count; i++)
                 {
-                    Console.WriteLine($"Press {i} for {result[i].Name}, who has {result[i].NumberCardsInHand} cards.");
+                    _logger.LogInformation($"Press {i} for {result[i].Name}, who has {result[i].NumberCardsInHand} cards.");
                 }
                 var playerNumberString = Console.ReadLine();
                 if (!int.TryParse(playerNumberString, out int playerNumber))
                 {
-                    Console.WriteLine("You didn't pick a number correctly. Sorry.");
+                    _logger.LogInformation("You didn't pick a number correctly. Sorry.");
                 }
                 var victim = result[playerNumber];
                 _logger.LogInformation($"{Name} is asking {victim.Name} for a {fish}.");
