@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using ToolsCore;
 
 namespace GoFishHumanPlayer
 {
@@ -120,6 +119,12 @@ namespace GoFishHumanPlayer
             if (!int.TryParse(cardNumberString, out int cardNumber))
             {
                 _logger.LogInformation("You didn't pick a number correctly. Sorry.");
+                AskForFish();
+            }
+            if (cardNumber > cardsInHand.Count - 1)
+            {
+                _logger.LogInformation("The number you picked isn't available.");
+                AskForFish();
             }
             var pickACardAnyCard = cardsInHand[cardNumber];
 
@@ -144,6 +149,14 @@ namespace GoFishHumanPlayer
                 if (!int.TryParse(playerNumberString, out int playerNumber))
                 {
                     _logger.LogInformation("You didn't pick a number correctly. Sorry.");
+                    _logger.LogInformation("Bailing out of game.");
+                    return;
+                }
+                if (playerNumber > result.Count - 1)
+                {
+                    _logger.LogInformation("The number you picked isn't available.");
+                    _logger.LogInformation("Bailing out of game.");
+                    return;
                 }
                 var victim = result[playerNumber];
                 _logger.LogInformation($"{Name} is asking {victim.Name} for a {fish}.");
