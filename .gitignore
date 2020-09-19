@@ -37,8 +37,8 @@ ehthumbs.db
 Thumbs.db
 
 # GoFish specific binary files and build artifacts
-Dealer/bin/
-Dealer/obj/
+GoFishActors/bin/
+GoFishActors/obj/
 GoFishConsoleApp/bin/
 GoFishConsoleApp/obj/
 GoFishCore/bin/

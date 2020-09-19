@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Dealer\GoFishActors.csproj" />
+    <ProjectReference Include="..\GoFishActors\GoFishActors.csproj" />
     <ProjectReference Include="..\GoFishHumanPlayer\GoFishHumanPlayer.csproj" />
     <ProjectReference Include="..\ToolsCore\ToolsCore.csproj" />
   </ItemGroup>

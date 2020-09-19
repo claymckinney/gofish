@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.30330.147
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GoFishConsoleApp", "GoFishConsoleApp\GoFishConsoleApp.csproj", "{CEDA8069-3F3D-4761-95B9-A0A346FF51E6}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GoFishActors", "Dealer\GoFishActors.csproj", "{FE19E40F-9402-4B43-A276-7EA0B74EAB45}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GoFishActors", "GoFishActors\GoFishActors.csproj", "{FE19E40F-9402-4B43-A276-7EA0B74EAB45}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GoFishCore", "GoFishCore\GoFishCore.csproj", "{A9212362-6302-47C8-B731-C08CA0A792E6}"
 EndProject
