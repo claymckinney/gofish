@@ -31,18 +31,6 @@ namespace GoFishCore
             cardsInHand = new List<ICard>();
         }
 
-        private void FishRequestAffirmative(PlayerToPlayerGimmeFish fishRequest)
-        {
-            var cardToGive = cardsInHand.Where(x => x.Fish == fishRequest.Fish).FirstOrDefault();
-            cardsInHand.Remove(cardToGive);
-            _logger.LogInformation($"{Name} is giving {cardToGive.Fish} to {fishRequest.Sender.Name} and now has {cardsInHand.Count()} cards.");
-            fishRequest.Sender.Handle(
-                    new PlayerToPlayerGiveCard(
-                        sender: this,
-                        card: cardToGive)
-                );
-        }
-
         protected virtual void AskForFish()
         {
             // TODO: Check if any known Fish (from the conversation) are in my hand.
@@ -76,48 +64,6 @@ namespace GoFishCore
                 _logger.LogInformation($"{Name} wanted to ask for a fish, but none of the other players have any cards.");
                 TurnIsOver();
             }
-        }
-
-        private void LayDownMatches()
-        {
-            foreach (Fish fish in (Fish[])Enum.GetValues(typeof(Fish)))
-            {
-                var matches = cardsInHand.Where(x => x.Fish == fish).ToArray<ICard>();
-                if (matches.Count() > 1)
-                {
-                    _logger.LogInformation($"{Name} is laying down a pair of {fish}.");
-                    _pairsOnTable.Add((matches[0], matches[1]));
-                    cardsInHand.Remove(matches[0]);
-                    cardsInHand.Remove(matches[1]);
-                }
-            }
-        }
-
-        private void DrawUpToFive()
-        {
-            int numberNeeded = 5 - cardsInHand.Count;
-            if (numberNeeded > 0 && !drawPileIsEmpty)
-            {
-                _logger.LogInformation($"{Name} is asking the Dealer for {numberNeeded} cards to draw up to 5.");
-                _dealer.Handle(new PlayerToDealerAskForCards(sender: this, numberNeeded));
-            }
-            else
-            {
-                TurnIsOver();
-            }
-        }
-
-        private void HandleCard(ICard card)
-        {
-            cardsInHand.Add(card);
-            LayDownMatches();
-            DrawUpToFive();
-        }
-
-        protected void TurnIsOver()
-        {
-            _logger.LogInformation($"{Name}'s turn is over. {Name} has {cardsInHand.Count()} cards.");
-            _dealer.Handle(new PlayerToDealerTurnOver(sender: this));
         }
 
         public void Handle(DealerToPlayerDealCards dealtCards)
@@ -203,6 +149,60 @@ namespace GoFishCore
                     _logger.LogInformation($"{Name} recieved a PlayerToPlayerGoFish message that is unhandled. {message}");
                     break;
             }
+        }
+
+        private void FishRequestAffirmative(PlayerToPlayerGimmeFish fishRequest)
+        {
+            var cardToGive = cardsInHand.Where(x => x.Fish == fishRequest.Fish).FirstOrDefault();
+            cardsInHand.Remove(cardToGive);
+            _logger.LogInformation($"{Name} is giving {cardToGive.Fish} to {fishRequest.Sender.Name} and now has {cardsInHand.Count()} cards.");
+            fishRequest.Sender.Handle(
+                    new PlayerToPlayerGiveCard(
+                        sender: this,
+                        card: cardToGive)
+                );
+        }
+
+        private void LayDownMatches()
+        {
+            foreach (Fish fish in (Fish[])Enum.GetValues(typeof(Fish)))
+            {
+                var matches = cardsInHand.Where(x => x.Fish == fish).ToArray<ICard>();
+                if (matches.Count() > 1)
+                {
+                    _logger.LogInformation($"{Name} is laying down a pair of {fish}.");
+                    _pairsOnTable.Add((matches[0], matches[1]));
+                    cardsInHand.Remove(matches[0]);
+                    cardsInHand.Remove(matches[1]);
+                }
+            }
+        }
+
+        private void DrawUpToFive()
+        {
+            int numberNeeded = 5 - cardsInHand.Count;
+            if (numberNeeded > 0 && !drawPileIsEmpty)
+            {
+                _logger.LogInformation($"{Name} is asking the Dealer for {numberNeeded} cards to draw up to 5.");
+                _dealer.Handle(new PlayerToDealerAskForCards(sender: this, numberNeeded));
+            }
+            else
+            {
+                TurnIsOver();
+            }
+        }
+
+        private void HandleCard(ICard card)
+        {
+            cardsInHand.Add(card);
+            LayDownMatches();
+            DrawUpToFive();
+        }
+
+        protected void TurnIsOver()
+        {
+            _logger.LogInformation($"{Name}'s turn is over. {Name} has {cardsInHand.Count()} cards.");
+            _dealer.Handle(new PlayerToDealerTurnOver(sender: this));
         }
     }
 }

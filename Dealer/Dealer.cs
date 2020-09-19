@@ -8,7 +8,7 @@ using ToolsCore;
 
 namespace GoFishActors
 {
-    public class Dealer : IDealer, IActor
+    public class Dealer : IDealer
     {
         // The dealer has all the cards. Shuffles. Deals. Gives the top card when they "Go Fish". Gives cards for them to "Draw up to 5"
         // The dealer knows how many cards are left.
@@ -32,43 +32,6 @@ namespace GoFishActors
         public void RegisterPlayer(IPlayer player)
         {
             _players.Add(player);
-        }
-
-        public void Handle(IMessage message) // Must handle all "...ToDealer..." Messages
-        {
-            switch (message)
-            {
-                case PlayerToDealerDrawCard cardRequest when cardsInDeck.Any():
-                    var card = cardsInDeck.FirstOrDefault();
-                    cardsInDeck.Remove(card);
-                    _logger.LogInformation($"Dealer gives a card to {cardRequest.Sender.Name}. There are now {cardsInDeck.Count()} cards left in the draw pile.");
-                    cardRequest.Sender.Handle(new DealerToPlayerGiveCard(card));
-                    break;
-                case PlayerToDealerDrawCard cardRequest:
-                    _logger.LogInformation($"There are no cards left in the draw pile.");
-                    cardRequest.Sender.Handle(new DealerToPlayerNoCardsLeft());
-                    break;
-                case PlayerToDealerAskForCards cardsRequest when cardsInDeck.Any():
-                    GiveCardsToPlayer(cardsRequest.Number, cardsRequest.Sender);
-                    break;
-                case PlayerToDealerAskForCards cardsRequest:
-                    _logger.LogInformation($"There are no cards left in the draw pile.");
-                    cardsRequest.Sender.Handle(new DealerToPlayerNoCardsLeft());
-                    break;
-                case PlayerToDealerTurnOver turnOver:
-                    if (!IsGameOver())
-                    {
-                        TellNextPlayerToTakeTurn();
-                    }
-                    else
-                    {
-                        WhoWon();
-                    }
-                    break;
-                default:
-                    _logger.LogInformation($"Dealer recieved an unhandled message. {message}");
-                    break;
-            }
         }
 
         private void BuildNewDeck()
@@ -97,6 +60,55 @@ namespace GoFishActors
                 DealCardsToPlayer(5, player);
             }
             TellNextPlayerToTakeTurn();
+        }
+
+        public void Handle(PlayerToDealerAskForCards message)
+        {
+            switch (message)
+            {
+                case PlayerToDealerAskForCards cardsRequest when cardsInDeck.Any():
+                    GiveCardsToPlayer(cardsRequest.Number, cardsRequest.Sender);
+                    break;
+                case PlayerToDealerAskForCards cardsRequest:
+                    _logger.LogInformation($"There are no cards left in the draw pile.");
+                    cardsRequest.Sender.Handle(new DealerToPlayerNoCardsLeft());
+                    break;
+                default:
+                    _logger.LogInformation($"Dealer recieved an unhandled PlayerToDealerAskForCards message. {message}");
+                    break;
+            }
+        }
+
+        public void Handle(PlayerToDealerDrawCard message)
+        {
+            switch (message)
+            {
+                case PlayerToDealerDrawCard cardRequest when cardsInDeck.Any():
+                    var card = cardsInDeck.FirstOrDefault();
+                    cardsInDeck.Remove(card);
+                    _logger.LogInformation($"Dealer gives a card to {cardRequest.Sender.Name}. There are now {cardsInDeck.Count()} cards left in the draw pile.");
+                    cardRequest.Sender.Handle(new DealerToPlayerGiveCard(card));
+                    break;
+                case PlayerToDealerDrawCard cardRequest:
+                    _logger.LogInformation($"There are no cards left in the draw pile.");
+                    cardRequest.Sender.Handle(new DealerToPlayerNoCardsLeft());
+                    break;
+                default:
+                    _logger.LogInformation($"Dealer recieved an unhandled PlayerToDealerDrawCard message. {message}");
+                    break;
+            }
+        }
+
+        public void Handle(PlayerToDealerTurnOver message)
+        {
+            if (!IsGameOver())
+            {
+                TellNextPlayerToTakeTurn();
+            }
+            else
+            {
+                WhoWon();
+            }
         }
 
         private void DealCardsToPlayer(int numberOfCards, IPlayer player)
