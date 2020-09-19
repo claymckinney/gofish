@@ -7,7 +7,7 @@ using ToolsCore;
 
 namespace GoFishCore
 {
-    public class PlayerBase : IPlayer, IActor
+    public class PlayerBase : IPlayer
     {
         protected readonly IDealer _dealer;
         protected readonly ILogger _logger;
@@ -29,71 +29,6 @@ namespace GoFishCore
             _pairsOnTable = new List<(ICard, ICard)>();
             PairsOnTable = _pairsOnTable.AsReadOnly();
             cardsInHand = new List<ICard>();
-        }
-
-        public void Handle(IMessage message) // Must handle all the "...ToPlayer..." messages, from other players and from the dealer
-        {
-            switch (message)
-            {
-                case DealerAskPlayerToResetHand resetHand:
-                    ResetHand();
-                    break;
-                case DealerToPlayerDealCards dealtCards:
-                    cardsInHand.AddRange(dealtCards.Cards);
-                    _logger.LogInformation($"Dealer gave {Name} {dealtCards.Cards.Count()}. {Name} now has {cardsInHand.Count()} cards.");
-                    break;
-                case PlayerToPlayerGimmeFish fishRequest when cardsInHand.Where(x => x.Fish == fishRequest.Fish).Any():
-                    FishRequestAffirmative(fishRequest);
-                    break;
-                case PlayerToPlayerGimmeFish fishRequest:
-                    _logger.LogInformation($"{Name} is telling {fishRequest.Sender.Name} to \"Go Fish\".");
-                    fishRequest.Sender.Handle(new PlayerToPlayerGoFish(sender: this));
-                    break;
-                case DealerToPlayerItsYourTurn myTurn:
-                    LayDownMatches();
-                    if (cardsInHand.Any())
-                    {
-                        AskForFish();
-                    }
-                    else
-                    {
-                        DrawUpToFive();
-                    }
-                    break;
-                case PlayerToPlayerGiveCard gotCard:
-                    HandleCard(gotCard.Card);
-                    break;
-                case PlayerToPlayerGoFish goFish when drawPileIsEmpty:
-                    TurnIsOver();
-                    break;
-                case PlayerToPlayerGoFish goFish:
-                    _logger.LogInformation($"{Name} is asking the dealer for a card.");
-                    _dealer.Handle(new PlayerToDealerDrawCard(sender: this));
-                    break;
-                case DealerToPlayerGiveCard gotCard:
-                    HandleCard(gotCard.Card);
-                    break;
-                case DealerToPlayerNoCardsLeft noCard: // Response to either fishing in the draw pile or drawing up to 5
-                    _logger.LogInformation($"Dealer gave {Name} no cards because the draw pile is empty.");
-                    drawPileIsEmpty = true;
-                    TurnIsOver();
-                    break;
-                case DealerToPlayerGiveCards gotCards: // Response to drawing up to 5
-                    cardsInHand.AddRange(gotCards.Cards);
-                    _logger.LogInformation($"Dealer gave {Name} {gotCards.Cards.Count()} cards.");
-                    TurnIsOver();
-                    break;
-                default:
-                    _logger.LogInformation($"{Name} recieved a message that is unhandled. {message}");
-                    break;
-            }
-        }
-
-        private void ResetHand()
-        {
-            cardsInHand.Clear();
-            _pairsOnTable.Clear();
-            _logger.LogInformation($"{Name} has {cardsInHand.Count()} cards and {PairsOnTable.Count} pairs laid down on the table.");
         }
 
         private void FishRequestAffirmative(PlayerToPlayerGimmeFish fishRequest)
@@ -183,6 +118,91 @@ namespace GoFishCore
         {
             _logger.LogInformation($"{Name}'s turn is over. {Name} has {cardsInHand.Count()} cards.");
             _dealer.Handle(new PlayerToDealerTurnOver(sender: this));
+        }
+
+        public void Handle(DealerToPlayerDealCards dealtCards)
+        {
+            cardsInHand.AddRange(dealtCards.Cards);
+            _logger.LogInformation($"Dealer gave {Name} {dealtCards.Cards.Count()}. {Name} now has {cardsInHand.Count()} cards.");
+        }
+
+        public void Handle(DealerToPlayerGiveCard gotCard)
+        {
+            HandleCard(gotCard.Card);
+        }
+
+        public void Handle(DealerToPlayerGiveCards gotCards)
+        {
+            // Response to drawing up to 5
+            cardsInHand.AddRange(gotCards.Cards);
+            _logger.LogInformation($"Dealer gave {Name} {gotCards.Cards.Count()} cards.");
+            TurnIsOver();
+        }
+
+        public void Handle(DealerToPlayerItsYourTurn message)
+        {
+            LayDownMatches();
+            if (cardsInHand.Any())
+            {
+                AskForFish();
+            }
+            else
+            {
+                DrawUpToFive();
+            }
+        }
+
+        public void Handle(DealerToPlayerNoCardsLeft message)
+        {
+            _logger.LogInformation($"Dealer gave {Name} no cards because the draw pile is empty.");
+            drawPileIsEmpty = true;
+            TurnIsOver();
+        }
+
+        public void Handle(DealerToPlayerResetHand message)
+        {
+            cardsInHand.Clear();
+            _pairsOnTable.Clear();
+            _logger.LogInformation($"{Name} has {cardsInHand.Count()} cards and {PairsOnTable.Count} pairs laid down on the table.");
+        }
+
+        public void Handle(PlayerToPlayerGimmeFish message)
+        {
+            switch (message)
+            {
+                case PlayerToPlayerGimmeFish fishRequest when cardsInHand.Where(x => x.Fish == fishRequest.Fish).Any():
+                    FishRequestAffirmative(fishRequest);
+                    break;
+                case PlayerToPlayerGimmeFish fishRequest:
+                    _logger.LogInformation($"{Name} is telling {fishRequest.Sender.Name} to \"Go Fish\".");
+                    fishRequest.Sender.Handle(new PlayerToPlayerGoFish(sender: this));
+                    break;
+                default:
+                    _logger.LogInformation($"{Name} recieved a PlayerToPlayerGimmeFish message that is unhandled. {message}");
+                    break;
+            }
+        }
+
+        public void Handle(PlayerToPlayerGiveCard gotCard)
+        {
+            HandleCard(gotCard.Card);
+        }
+
+        public void Handle(PlayerToPlayerGoFish message)
+        {
+            switch (message)
+            {
+                case PlayerToPlayerGoFish goFish when drawPileIsEmpty:
+                    TurnIsOver();
+                    break;
+                case PlayerToPlayerGoFish goFish:
+                    _logger.LogInformation($"{Name} is asking the dealer for a card.");
+                    _dealer.Handle(new PlayerToDealerDrawCard(sender: this));
+                    break;
+                default:
+                    _logger.LogInformation($"{Name} recieved a PlayerToPlayerGoFish message that is unhandled. {message}");
+                    break;
+            }
         }
     }
 }

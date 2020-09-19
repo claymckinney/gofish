@@ -90,7 +90,7 @@ namespace GoFishActors
             // Tell each player to Reset their Hand
             foreach(var player in Players)
             {
-                player.Handle(new DealerAskPlayerToResetHand());
+                player.Handle(new DealerToPlayerResetHand());
             }
             foreach(var player in Players)
             {

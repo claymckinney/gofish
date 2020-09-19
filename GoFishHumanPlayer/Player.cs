@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace GoFishHumanPlayer
 {
-    public class Player : PlayerBase, IPlayer, IActor
+    public class Player : PlayerBase, IPlayer
     {
         public Player(IDealer dealer, ILogger<Player> logger) : base(dealer, logger)
         {
