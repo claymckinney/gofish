@@ -7,7 +7,7 @@ using ToolsCore;
 
 namespace GoFishCore
 {
-    public class PlayerBase : IPlayer
+    public abstract class PlayerBase : IPlayer
     {
         protected readonly IDealer _dealer;
         protected readonly ILogger _logger;
